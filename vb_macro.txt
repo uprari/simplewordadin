@@ -1,0 +1,92 @@
+Press Alt + F11 in Word.
+
+Go to Insert > Module.
+
+Paste the code below.
+
+Dim fetchedData As String
+
+Sub FetchData()
+    Dim url As String, token As String
+    Dim http As Object
+
+    url = InputBox("Enter URL to fetch data from:", "Enter URL")
+    token = InputBox("Enter your bearer token:", "Enter Token")
+
+    If url = "" Or token = "" Then
+        MsgBox "URL and token are required.", vbExclamation
+        Exit Sub
+    End If
+
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    On Error GoTo ErrorHandler
+
+    http.Open "GET", url, False
+    http.setRequestHeader "Authorization", "Bearer " & token
+    http.send
+
+    If http.Status = 200 Then
+        fetchedData = http.responseText
+        MsgBox "Data fetched successfully!", vbInformation
+    Else
+        MsgBox "Failed to fetch data. Status: " & http.Status, vbCritical
+    End If
+
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "An error occurred while fetching data.", vbCritical
+End Sub
+
+Sub DisplayFetchedData()
+    If fetchedData = "" Then
+        MsgBox "No data available. Please fetch data first.", vbExclamation
+    Else
+        MsgBox "Fetched Data (first 500 characters):" & vbCrLf & vbCrLf & Left(fetchedData, 500), vbInformation
+    End If
+End Sub
+
+Sub InsertHtmlToWord()
+    If fetchedData = "" Then
+        MsgBox "No data to insert. Please fetch data first.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Insert the HTML content at the end of the document
+    Dim rng As Range
+    Set rng = ActiveDocument.Range
+    rng.Collapse Direction:=wdCollapseEnd
+    rng.InsertBefore vbCrLf & "=== Inserted HTML Content ===" & vbCrLf
+
+    ' This method inserts as plain text — not rendered HTML. For true HTML rendering, use a browser control or Word Add-in
+    rng.InsertAfter fetchedData
+    MsgBox "HTML content inserted into the document.", vbInformation
+End Sub
+
+===
+Go to the Developer tab in Word (enable it via Options > Customize Ribbon).
+
+Click Insert > Button (ActiveX Control).
+
+Right-click the button → Properties → Name it e.g. btnFetch, btnDisplay, btnInsert.
+
+Close Properties, right-click again → View Code.
+
+Inside each button’s click event, call the corresponding macro:
+
+
+Private Sub btnFetch_Click()
+    FetchData
+End Sub
+
+Private Sub btnDisplay_Click()
+    DisplayFetchedData
+End Sub
+
+Private Sub btnInsert_Click()
+    InsertHtmlToWord
+End Sub
+
+
+=====
+
